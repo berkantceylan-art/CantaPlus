@@ -83,7 +83,7 @@ export function DashboardContent() {
         >
           <div className="mt-2">
             <div className="text-3xl font-black tabular-nums tracking-tighter">
-              ₺{stats?.totalRevenue.toLocaleString("tr-TR") || "..."}
+              ₺{stats?.totalRevenue?.toLocaleString("tr-TR") || "..."}
             </div>
             <div className="flex items-center gap-1 text-[10px] text-green-500 font-bold mt-2 uppercase">
               <ArrowUpRight className="h-3 w-3" /> Canlı Veri Akışı Aktif
@@ -113,7 +113,7 @@ export function DashboardContent() {
         >
           <div className="mt-2">
             <div className="text-3xl font-black tabular-nums tracking-tighter">
-              {stats?.totalStock.toLocaleString("tr-TR") || "0"}
+              {stats?.totalStock?.toLocaleString("tr-TR") || "0"}
             </div>
             <div className="flex items-center gap-1 text-[10px] text-amber-500 font-bold mt-2 uppercase tracking-widest leading-none">
               %{stats?.lowStockPercentage || "0"} KRİTİK SEVİYEDE

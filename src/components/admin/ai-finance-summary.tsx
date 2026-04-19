@@ -51,7 +51,7 @@ export function AIFinanceSummary() {
 
             <div className="space-y-3">
               <h3 className="text-xl font-bold text-zinc-100 text-luxury">
-                Satışlarınızda bu dönem <span className="text-primary">%{aiSummary?.margin.toFixed(1)} kâr marjı</span> korundu.
+                Satışlarınızda bu dönem <span className="text-primary">%{aiSummary?.margin?.toFixed(1) || "0"} kâr marjı</span> korundu.
               </h3>
               <p className="text-zinc-400 text-sm leading-relaxed max-w-2xl">
                 {aiSummary?.summary}
@@ -74,7 +74,7 @@ export function AIFinanceSummary() {
               <div className="flex items-center gap-1.5 text-zinc-500 text-[10px] font-bold uppercase tracking-wider">
                 <Wallet className="h-3 w-3" /> Brüt Ciro
               </div>
-              <p className="text-2xl font-bold text-zinc-100">₺{stats?.totalRevenue.toLocaleString("tr-TR")}</p>
+              <p className="text-2xl font-bold text-zinc-100">₺{stats?.totalRevenue?.toLocaleString("tr-TR") || "0"}</p>
               <div className="flex items-center gap-1 text-[10px] text-green-500">
                 <TrendingUp className="h-3 w-3" /> Canlı
               </div>
@@ -84,7 +84,7 @@ export function AIFinanceSummary() {
               <div className="flex items-center gap-1.5 text-zinc-500 text-[10px] font-bold uppercase tracking-wider">
                 <Receipt className="h-3 w-3" /> Komisyonlar
               </div>
-              <p className="text-2xl font-bold text-zinc-100 italic opacity-80">₺{stats?.totalCommission.toLocaleString("tr-TR")}</p>
+              <p className="text-2xl font-bold text-zinc-100 italic opacity-80">₺{stats?.totalCommission?.toLocaleString("tr-TR") || "0"}</p>
               <div className="flex items-center gap-1 text-[10px] text-zinc-500">
                 Toplam Kesinti
               </div>
@@ -94,7 +94,7 @@ export function AIFinanceSummary() {
               <div className="flex items-center gap-1.5 text-zinc-500 text-[10px] font-bold uppercase tracking-wider">
                 <Truck className="h-3 w-3" /> Kargo Maliyeti
               </div>
-              <p className="text-2xl font-bold text-zinc-100">₺{stats?.totalShipping.toLocaleString("tr-TR")}</p>
+              <p className="text-2xl font-bold text-zinc-100">₺{stats?.totalShipping?.toLocaleString("tr-TR") || "0"}</p>
               <div className="text-[10px] text-zinc-500">
                 Lojistik Gideri
               </div>
@@ -104,7 +104,7 @@ export function AIFinanceSummary() {
               <div className="flex items-center gap-1.5 text-primary text-[10px] font-bold uppercase tracking-wider">
                 <Sparkles className="h-3 w-3" /> Net Kâr
               </div>
-              <p className="text-2xl font-bold text-primary">₺{stats?.netProfit.toLocaleString("tr-TR")}</p>
+              <p className="text-2xl font-bold text-primary">₺{stats?.netProfit?.toLocaleString("tr-TR") || "0"}</p>
               <div className="flex items-center gap-1 text-[10px] text-primary/70">
                 <TrendingUp className="h-3 w-3" /> Güncel Veri
               </div>
