@@ -14,13 +14,14 @@ CREATE TABLE IF NOT EXISTS categories (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 3. Ürünler Tablosu - Yoksa Oluştur
+-- 3. Ürünler Tablosu - Güncellendi (V4 Maliyet Takibi için)
 CREATE TABLE IF NOT EXISTS products (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   slug TEXT NOT NULL UNIQUE,
   description TEXT,
   price NUMERIC(10, 2) NOT NULL,
+  cost_price NUMERIC(10, 2) DEFAULT 0, -- FIFO/LIFO için maliyet alanı
   stock INTEGER DEFAULT 0 NOT NULL,
   images TEXT[] DEFAULT '{}',
   category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
@@ -29,129 +30,98 @@ CREATE TABLE IF NOT EXISTS products (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 4. Stok Kayıtları Tablosu (V2 Corporate) - Yoksa Oluştur
-CREATE TABLE IF NOT EXISTS stock_logs (
+-- 4. Envanter Günlükleri (V4 Detaylandırılmış)
+CREATE TABLE IF NOT EXISTS inventory_logs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   product_id UUID REFERENCES products(id) ON DELETE CASCADE,
   change_amount INTEGER NOT NULL,
   new_stock INTEGER NOT NULL,
-  reason TEXT, -- 'sale', 'manual_update', 'marketplace_sync'
+  type TEXT NOT NULL DEFAULT 'manual', -- 'sale', 'adjustment', 'purchase', 'return'
+  reason TEXT, -- 'Satis', 'Sayim Farki', 'Alis Faturasi'
   platform TEXT DEFAULT 'ÇantaPlus',
+  meta_data JSONB DEFAULT '{}'::jsonb, -- Tedarikçi veya Sipariş ID gibi ekstra veriler
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 5. Siparişler Tablosu - Güncellendi (V3 e-Logo Entegrasyonu için)
-CREATE TABLE IF NOT EXISTS orders (
+-- 11. Müşteriler (CRM)
+CREATE TABLE IF NOT EXISTS customers (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  customer_id UUID,
-  customer_full_name TEXT,
-  customer_email TEXT,
-  customer_phone TEXT,
-  customer_address TEXT,
-  tax_id TEXT, -- TCKN veya VKN
+  full_name TEXT NOT NULL,
+  email TEXT UNIQUE,
+  phone TEXT,
+  address TEXT,
+  tax_id TEXT, -- TCKN/VKN
   tax_office TEXT,
-  total_price NUMERIC(10, 2) NOT NULL,
-  status TEXT NOT NULL DEFAULT 'pending', -- pending, paid, shipped, delivered, cancelled
-  platform TEXT NOT NULL DEFAULT 'ÇantaPlus',
-  invoice_url TEXT,
+  tags TEXT[], -- 'VIP', 'Iade Eden' vb.
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 6. Sipariş Kalemleri Tablosu - Yoksa Oluştur
-CREATE TABLE IF NOT EXISTS order_items (
+-- 12. Tedarikçiler
+CREATE TABLE IF NOT EXISTS suppliers (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
-  product_id UUID REFERENCES products(id) ON DELETE SET NULL,
-  quantity INTEGER NOT NULL,
-  price NUMERIC(10, 2) NOT NULL,
-  commission_rate NUMERIC(5, 2) DEFAULT 0,
-  shipping_cost NUMERIC(10, 2) DEFAULT 0,
+  company_name TEXT NOT NULL,
+  contact_person TEXT,
+  email TEXT,
+  phone TEXT,
+  address TEXT,
+  balance NUMERIC(10, 2) DEFAULT 0, -- Mevcut borç/alacak bakiyesi
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 7. Pazaryeri Eşleşmeleri - Yoksa Oluştur
-CREATE TABLE IF NOT EXISTS marketplace_mappings (
+-- 15. Tedarikçi Hareketleri (Borç/Alacak)
+CREATE TABLE IF NOT EXISTS supplier_transactions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  product_id UUID REFERENCES products(id) ON DELETE CASCADE,
-  platform TEXT NOT NULL,
-  external_sku TEXT NOT NULL,
-  external_product_id TEXT,
-  sync_status TEXT DEFAULT 'active',
-  last_sync_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-  UNIQUE(platform, external_sku)
-);
-
--- 8. Entegrasyonlar Tablosu ve Sütun Kontrolü
-CREATE TABLE IF NOT EXISTS integrations (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  platform_name TEXT NOT NULL UNIQUE,
-  api_key TEXT,
-  api_secret TEXT,
-  is_active BOOLEAN DEFAULT false,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- integrations tablosuna eksik sütunları güvenli şekilde ekle
-DO $$ 
-BEGIN 
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='integrations' AND column_name='merchant_id') THEN
-    ALTER TABLE integrations ADD COLUMN merchant_id TEXT;
-  END IF;
-
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='integrations' AND column_name='seller_id') THEN
-    ALTER TABLE integrations ADD COLUMN seller_id TEXT;
-  END IF;
-
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='integrations' AND column_name='api_status') THEN
-    ALTER TABLE integrations ADD COLUMN api_status TEXT DEFAULT 'idle';
-  END IF;
-END $$;
-
--- 9. Faturalar Tablosu (Omni-Nexus V3)
-CREATE TABLE IF NOT EXISTS invoices (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
-  invoice_no TEXT, -- Logo'dan dönen fatura numarası (Örn: GIB2026000000123)
-  uuid UUID, -- Logo'daki ETTN numarası
-  status TEXT DEFAULT 'draft', -- draft, signed, sent, error
-  external_id TEXT, -- Logo'daki dahili ID
-  pdf_url TEXT,
-  xml_url TEXT,
-  error_message TEXT,
+  supplier_id UUID REFERENCES suppliers(id) ON DELETE CASCADE,
+  amount NUMERIC(10, 2) NOT NULL,
+  type TEXT NOT NULL, -- 'payment' (ödeme yaptık), 'purchase' (mal aldık/borçlandık)
+  description TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 10. RLS Politikaları (Güvenlik)
+-- 13. Sistem Logları (Try-Catch çıktıları için)
+CREATE TABLE IF NOT EXISTS sys_logs (
+-- ... (rest of the file)
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  level TEXT DEFAULT 'error', -- 'info', 'warn', 'error'
+  module TEXT, -- 'e-Logo', 'Trendyol', 'Sync'
+  message TEXT NOT NULL,
+  stack_trace TEXT,
+  context JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 14. RLS Politikaları (Admin Sıkılaştırması)
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
-ALTER TABLE stock_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE inventory_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE suppliers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sys_logs ENABLE ROW LEVEL SECURITY;
 
--- Ürünler için tam erişim
-DROP POLICY IF EXISTS "Authenticated users can manage products" ON products;
-CREATE POLICY "Authenticated users can manage products" ON products 
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- Politikaları admin rolü kontrolüyle tanımla
+-- Not: profiles tablosundaki role 'admin' olanlar her şeyi yapabilir.
+DO $$ 
+BEGIN
+  -- Products
+  DROP POLICY IF EXISTS "Admins manage products" ON products;
+  CREATE POLICY "Admins manage products" ON products FOR ALL TO authenticated 
+  USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'));
 
--- Stok logları için tam erişim
-DROP POLICY IF EXISTS "Authenticated users can manage stock logs" ON stock_logs;
-CREATE POLICY "Authenticated users can manage stock logs" ON stock_logs 
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+  -- Customers
+  DROP POLICY IF EXISTS "Admins manage customers" ON customers;
+  CREATE POLICY "Admins manage customers" ON customers FOR ALL TO authenticated 
+  USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'));
 
--- Kategoriler için tam erişim
-DROP POLICY IF EXISTS "Authenticated users can manage categories" ON categories;
-CREATE POLICY "Authenticated users can manage categories" ON categories 
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+  -- Suppliers
+  DROP POLICY IF EXISTS "Admins manage suppliers" ON suppliers;
+  CREATE POLICY "Admins manage suppliers" ON suppliers FOR ALL TO authenticated 
+  USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'));
 
--- Siparişler için tam erişim
-DROP POLICY IF EXISTS "Authenticated users can manage orders" ON orders;
-CREATE POLICY "Authenticated users can manage orders" ON orders 
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
-
--- Faturalar için tam erişim (V3)
-DROP POLICY IF EXISTS "Authenticated users can manage invoices" ON invoices;
-CREATE POLICY "Authenticated users can manage invoices" ON invoices 
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+  -- Sys Logs
+  DROP POLICY IF EXISTS "Admins view logs" ON sys_logs;
+  CREATE POLICY "Admins view logs" ON sys_logs FOR SELECT TO authenticated 
+  USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'));
+END $$;

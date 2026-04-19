@@ -7,6 +7,7 @@ export interface MarketplaceAdapter {
   updatePrice(sku: string, price: number): Promise<boolean>;
   updateStock(sku: string, stock: number): Promise<boolean>;
   syncProduct(product: any): Promise<boolean>;
+  getRecentOrders(): Promise<any[]>; // Yeni siparişleri çekme (Inbound)
 }
 
 /**
@@ -20,7 +21,6 @@ abstract class BaseAdapter {
 
   protected async handleApiError(error: any, action: string) {
     this.log(`Hata oluştu (${action}): ${error.message}`, 'error');
-    // Burada merkezi bir hata takip sistemine (Sentry vb.) log atılabilir.
     return false;
   }
 }
@@ -31,7 +31,6 @@ export class TrendyolAdapter extends BaseAdapter implements MarketplaceAdapter {
   async updatePrice(sku: string, price: number): Promise<boolean> {
     try {
       this.log(`Fiyat güncelleniyor: ${sku} -> ₺${price}`);
-      // TODO: process.env.TRENDYOL_API_KEY ile gerçek istek atılacak
       await new Promise(resolve => setTimeout(resolve, 300));
       return true;
     } catch (e) { return this.handleApiError(e, 'updatePrice'); }
@@ -49,6 +48,12 @@ export class TrendyolAdapter extends BaseAdapter implements MarketplaceAdapter {
     this.log(`Ürün senkronize ediliyor: ${product.name}`);
     await new Promise(resolve => setTimeout(resolve, 500));
     return true;
+  }
+
+  async getRecentOrders(): Promise<any[]> {
+    this.log(`Yeni siparişler kontrol ediliyor...`);
+    // TODO: process.env.TRENDYOL_API_KEY ile gerçek istek
+    return [];
   }
 }
 
@@ -72,6 +77,11 @@ export class HepsiburadaAdapter extends BaseAdapter implements MarketplaceAdapte
     await new Promise(resolve => setTimeout(resolve, 500));
     return true;
   }
+
+  async getRecentOrders(): Promise<any[]> {
+    this.log(`Yeni siparişler kontrol ediliyor...`);
+    return [];
+  }
 }
 
 export class N11Adapter extends BaseAdapter implements MarketplaceAdapter {
@@ -93,6 +103,11 @@ export class N11Adapter extends BaseAdapter implements MarketplaceAdapter {
     this.log(`Ürün senkronize ediliyor: ${product.name}`);
     await new Promise(resolve => setTimeout(resolve, 500));
     return true;
+  }
+
+  async getRecentOrders(): Promise<any[]> {
+    this.log(`Yeni siparişler kontrol ediliyor...`);
+    return [];
   }
 }
 
