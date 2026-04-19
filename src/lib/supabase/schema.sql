@@ -103,9 +103,29 @@ BEGIN
   END IF;
 END $$;
 
--- 9. Realtime Ayarları (Tüm tablolar için)
--- Not: Bu komutlar hata verirse Supabase panelinden manuel olarak de aktif edilebilir.
-BEGIN;
-  DROP PUBLICATION IF EXISTS supabase_realtime;
-  CREATE PUBLICATION supabase_realtime FOR TABLE products, orders, stock_logs, integrations, ai_price_logs;
-COMMIT;
+-- 10. RLS Politikaları (Güvenlik)
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stock_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
+
+-- Ürünler için tam erişim
+DROP POLICY IF EXISTS "Authenticated users can manage products" ON products;
+CREATE POLICY "Authenticated users can manage products" ON products 
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Stok logları için tam erişim
+DROP POLICY IF EXISTS "Authenticated users can manage stock logs" ON stock_logs;
+CREATE POLICY "Authenticated users can manage stock logs" ON stock_logs 
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Kategoriler için tam erişim
+DROP POLICY IF EXISTS "Authenticated users can manage categories" ON categories;
+CREATE POLICY "Authenticated users can manage categories" ON categories 
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Siparişler için tam erişim
+DROP POLICY IF EXISTS "Authenticated users can manage orders" ON orders;
+CREATE POLICY "Authenticated users can manage orders" ON orders 
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);

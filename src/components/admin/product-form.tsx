@@ -8,25 +8,33 @@ import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { addProduct } from "@/lib/actions/product"
-import { useActionState, useState } from "react"
+import { useState, useTransition } from "react"
 import { ImageDropzone } from "@/components/admin/image-dropzone"
 
 export function ProductForm() {
+  const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   
-  const [state, action, isPending] = useActionState(
-    async (prevState: any, formData: FormData) => {
-      // Dosyaları FormData'ya ekle
-      selectedFiles.forEach(file => {
-        formData.append("images", file)
-      })
-      return await addProduct(formData)
-    },
-    null
-  )
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setError(null)
+    
+    const formData = new FormData(e.currentTarget)
+    selectedFiles.forEach(file => {
+      formData.append("images", file)
+    })
+
+    startTransition(async () => {
+      const result = await addProduct(formData)
+      if (result?.error) {
+        setError(result.error)
+      }
+    })
+  }
 
   return (
-    <div className="space-y-6 max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-6 max-w-4xl">
       <div className="flex items-center gap-4">
         <Link href="/dashboard/urunler" className={buttonVariants({ variant: "outline", size: "icon", className: "rounded-xl border-zinc-200 dark:border-zinc-800" })}>
           <ArrowLeft className="h-4 w-4" />
@@ -37,7 +45,7 @@ export function ProductForm() {
         </div>
       </div>
 
-      <form action={action} className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-20">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-20">
         <div className="lg:col-span-2 space-y-6">
           <Card className="border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm">
             <CardHeader className="bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
@@ -45,9 +53,9 @@ export function ProductForm() {
               <CardDescription className="text-xs uppercase tracking-widest font-bold text-zinc-500">Temel tanımlamalar ve içerik</CardDescription>
             </CardHeader>
             <CardContent className="p-8 space-y-6">
-              {state?.error && (
-                <div className="p-4 bg-destructive/10 text-destructive rounded-2xl text-xs font-bold uppercase tracking-wider border border-destructive/20 animate-shake">
-                  {state.error}
+              {error && (
+                <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-xs font-bold uppercase tracking-wider border border-red-100">
+                  {error}
                 </div>
               )}
 
@@ -106,11 +114,15 @@ export function ProductForm() {
           <Card className="border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm bg-zinc-900 text-white">
             <CardContent className="p-8 space-y-6">
               <div className="space-y-2">
-                <h4 className="text-xs font-black uppercase tracking-widest text-primary">Yayına Hazır mısınız?</h4>
-                <p className="text-[10px] text-zinc-400 font-medium">Bu ürün kaydedildiğinde otomatik olarak Trendyol ve Hepsiburada kataloglarınıza eklenecektir.</p>
+                <h4 className="text-xs font-black uppercase tracking-widest text-white/50">Yayına Hazır mısınız?</h4>
+                <p className="text-[10px] text-zinc-400 font-medium tracking-tight">Ürün kaydedildiğinde Trendyol ve Hepsiburada ile senkronizasyon başlar.</p>
               </div>
               
-              <Button type="submit" className="w-full h-12 rounded-xl font-bold uppercase tracking-widest text-xs gold-gradient border-none text-zinc-950 shadow-xl" disabled={isPending}>
+              <Button 
+                type="submit" 
+                className="w-full h-12 rounded-xl font-bold uppercase tracking-widest text-xs bg-white text-black hover:bg-zinc-200 transition-all shadow-xl" 
+                disabled={isPending}
+              >
                 {isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
