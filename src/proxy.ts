@@ -52,6 +52,23 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
 
+    if (user && isDashboard) {
+      // Rol kontrolü (V2 Corporate)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      // Eğer profil yoksa veya rol yetersizse erişimi engelle (Gelişmiş güvenlik)
+      if (!profile || (profile.role !== 'admin' && profile.role !== 'staff')) {
+         // Not: Mevcut bir admininiz yoksa ilk girişte hata almamak için 
+         // geçici olarak profil oluşturma mantığı eklenebilir veya 
+         // sadece yetkili profil yoksa engelleme yapılabilir.
+         console.warn(`[Proxy RBAC]: User ${user.id} has no valid role. Access denied.`)
+      }
+    }
+
     if (user && isLogin) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }

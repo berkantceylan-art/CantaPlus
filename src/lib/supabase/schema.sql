@@ -1,3 +1,11 @@
+-- Profiles Table (RBAC)
+CREATE TABLE profiles (
+  id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
+  full_name TEXT,
+  role TEXT DEFAULT 'staff', -- admin, staff
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- Categories Table
 CREATE TABLE categories (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -19,6 +27,17 @@ CREATE TABLE products (
   marketplace_data JSONB DEFAULT '{}'::jsonb,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Stock Logs Table (V2 Corporate)
+CREATE TABLE stock_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  product_id UUID REFERENCES products(id) ON DELETE CASCADE,
+  change_amount INTEGER NOT NULL,
+  new_stock INTEGER NOT NULL,
+  reason TEXT, -- 'sale', 'manual_update', 'marketplace_sync'
+  platform TEXT DEFAULT 'ÇantaPlus',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 -- Orders Table
@@ -86,7 +105,10 @@ CREATE TABLE integrations (
   platform_name TEXT NOT NULL UNIQUE,
   api_key TEXT,
   api_secret TEXT,
+  merchant_id TEXT, -- Trendyol/Hepsiburada özel
+  seller_id TEXT,
   is_active BOOLEAN DEFAULT false,
+  api_status TEXT DEFAULT 'idle', -- idle, testing, active, error
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -94,3 +116,6 @@ CREATE TABLE integrations (
 -- Realtime Setup
 alter publication supabase_realtime add table products;
 alter publication supabase_realtime add table orders;
+alter publication supabase_realtime add table stock_logs;
+alter publication supabase_realtime add table integrations;
+alter publication supabase_realtime add table ai_price_logs;

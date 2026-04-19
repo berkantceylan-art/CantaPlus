@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Package, LayoutDashboard, ShoppingCart, Settings, Users, ArrowLeft, LogOut, Zap } from "lucide-react"
 import { logout } from "@/lib/actions/auth"
 import { Button } from "@/components/ui/button"
+import { Toaster } from "@/components/ui/sonner"
 
 export default function AdminLayout({
   children,
@@ -62,6 +63,7 @@ export default function AdminLayout({
       <main className="flex-1 overflow-y-auto bg-muted/10 p-8">
         {children}
       </main>
+      <Toaster position="top-right" richColors closeButton />
     </div>
   )
 }

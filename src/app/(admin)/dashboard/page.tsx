@@ -1,141 +1,121 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Package, DollarSign, Users, ArrowUpRight, TrendingUp } from "lucide-react"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import { BentoGrid, BentoCard } from "@/components/dashboard/bento-grid"
+import { RevenueAreaChart } from "@/components/dashboard/revenue-area-chart"
+import { QuickActions } from "@/components/dashboard/quick-actions"
 import { AIFinanceSummary } from "@/components/admin/ai-finance-summary"
-
-const data = [
-  { name: "Pzt", satis: 4000, trendyol: 2400 },
-  { name: "Sal", satis: 3000, trendyol: 1398 },
-  { name: "Çar", satis: 2000, trendyol: 9800 },
-  { name: "Per", satis: 2780, trendyol: 3908 },
-  { name: "Cum", satis: 1890, trendyol: 4800 },
-  { name: "Cmt", satis: 2390, trendyol: 3800 },
-  { name: "Paz", satis: 3490, trendyol: 4300 },
-]
+import { DashboardCommandPalette } from "@/components/dashboard/command-palette"
+import { useRealtimeOrders } from "@/hooks/use-realtime-orders"
+import { 
+  DollarSign, 
+  Package, 
+  ShoppingCart, 
+  TrendingUp, 
+  Activity, 
+  Globe, 
+  Zap, 
+  ArrowUpRight 
+} from "lucide-react"
 
 export default function DashboardPage() {
+  // Real-time sipariş takibini başlat
+  useRealtimeOrders()
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard Overview</h1>
-        <p className="text-muted-foreground">Mağazanızın bugünkü genel durumu.</p>
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black tracking-tighter text-zinc-900 dark:text-zinc-100 uppercase">
+            Ticaret <span className="text-zinc-400">Komuta Merkezi</span>
+          </h1>
+          <p className="text-sm font-medium text-zinc-500">
+            Pazaryeri ve depo verileriniz şu an <span className="text-green-500 animate-pulse font-bold">canlı</span> olarak izleniyor.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <DashboardCommandPalette />
+        </div>
       </div>
 
       <AIFinanceSummary />
 
-      {/* İstatistik Kartları */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Toplam Gelir</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₺45,231.89</div>
-            <p className="text-xs text-muted-foreground flex items-center mt-1">
-              <ArrowUpRight className="h-3 w-3 mr-1 text-green-500" />
-              <span className="text-green-500 font-medium">+20.1%</span> geçen aya göre
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Yeni Siparişler</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+245</div>
-            <p className="text-xs text-muted-foreground flex items-center mt-1">
-              <ArrowUpRight className="h-3 w-3 mr-1 text-green-500" />
-              <span className="text-green-500 font-medium">+15%</span> geçen haftaya göre
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Satılan Ürün</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12,234</div>
-            <p className="text-xs text-muted-foreground flex items-center mt-1">
-              <ArrowUpRight className="h-3 w-3 mr-1 text-green-500" />
-              <span className="text-green-500 font-medium">+19%</span> geçen aya göre
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Aktif Müşteri</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+573</div>
-            <p className="text-xs text-muted-foreground flex items-center mt-1">
-              <span className="text-green-500 font-medium">+201</span> son 24 saatte
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <BentoGrid>
+        {/* Ana Gelir Grafiği (Büyük Kart) */}
+        <BentoCard 
+          title="Birleşik Gelir Analizi" 
+          description="Tüm platformların performans karşılaştırması"
+          className="md:col-span-3 lg:col-span-3 lg:row-span-1"
+          icon={<Activity className="h-5 w-5" />}
+        >
+          <div className="h-[250px] mt-4">
+            <RevenueAreaChart />
+          </div>
+        </BentoCard>
 
-      {/* Grafikler ve Bekleyen İşler */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
-          <CardHeader>
-            <CardTitle>Genel Satış Grafiği</CardTitle>
-            <CardDescription>
-              ÇantaPlus ve Trendyol platformlarından gelen haftalık satışlar.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
-                  <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₺${value}`} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
-                    formatter={(value: any) => [`₺${value}`, ""]} 
-                  />
-                  <Line type="monotone" dataKey="satis" name="Kendi Sitemiz" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="trendyol" name="Trendyol" stroke="#f27a1a" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Hızlı İşlemler */}
+        <BentoCard 
+          title="Hızlı İşlemler" 
+          description="Kritik öncelikli aksiyonlar"
+          className="md:col-span-1 lg:col-span-1"
+          icon={<Zap className="h-5 w-5" />}
+        >
+          <div className="mt-4">
+            <QuickActions />
+          </div>
+        </BentoCard>
 
-        <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle>Bekleyen İşlemler</CardTitle>
-            <CardDescription>
-              Acil onay ve gönderim bekleyen siparişleriniz.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                { id: "ORD-001", customer: "Ahmet Yılmaz", platform: "Trendyol", status: "Paketleniyor" },
-                { id: "ORD-002", customer: "Ayşe Kaya", platform: "ÇantaPlus", status: "Onay Bekliyor" },
-                { id: "ORD-003", customer: "Mehmet Demir", platform: "Hepsiburada", status: "Kargoya Verilecek" },
-              ].map((order) => (
-                <div key={order.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                  <div className="flex flex-col gap-1">
-                    <span className="font-medium text-sm">{order.id}</span>
-                    <span className="text-xs text-muted-foreground">{order.customer} - {order.platform}</span>
-                  </div>
-                  <div className="text-xs font-medium bg-muted px-2 py-1 rounded-md">
-                    {order.status}
-                  </div>
-                </div>
-              ))}
+        {/* İstatistikler */}
+        <BentoCard 
+          title="Toplam Gelir" 
+          className="lg:col-span-1"
+          icon={<DollarSign className="h-5 w-5" />}
+        >
+          <div className="mt-2">
+            <div className="text-3xl font-black tabular-nums tracking-tighter">₺142.500</div>
+            <div className="flex items-center gap-1 text-[10px] text-green-500 font-bold mt-2">
+              <ArrowUpRight className="h-3 w-3" /> +12% GEÇEN AYA GÖRE
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </BentoCard>
+
+        <BentoCard 
+          title="Aktif Siparişler" 
+          className="lg:col-span-1"
+          icon={<ShoppingCart className="h-5 w-5" />}
+        >
+          <div className="mt-2">
+            <div className="text-3xl font-black tabular-nums tracking-tighter">48</div>
+            <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-bold mt-2 uppercase">
+              12 tanesi Trendyol'da
+            </div>
+          </div>
+        </BentoCard>
+
+        <BentoCard 
+          title="Stok Durumu" 
+          className="lg:col-span-1"
+          icon={<Package className="h-5 w-5" />}
+        >
+          <div className="mt-2">
+            <div className="text-3xl font-black tabular-nums tracking-tighter">2.540</div>
+            <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-bold mt-2 uppercase tracking-widest leading-none">
+              %8 Kritik Seviyede
+            </div>
+          </div>
+        </BentoCard>
+
+        <BentoCard 
+          title="Platform Erişimi" 
+          className="lg:col-span-1"
+          icon={<Globe className="h-5 w-5" />}
+        >
+           <div className="mt-4 flex flex-wrap gap-2">
+              <div className="px-2 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 text-[10px] font-bold">TY: AKTİF</div>
+              <div className="px-2 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 text-[10px] font-bold">HB: AKTİF</div>
+              <div className="px-2 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 text-[10px] font-bold text-red-500">N11: HATA</div>
+           </div>
+        </BentoCard>
+      </BentoGrid>
     </div>
   )
 }
