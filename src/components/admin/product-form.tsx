@@ -5,13 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, Loader2 } from "lucide-react"
+import * as Icons from "lucide-react"
 import Link from "next/link"
 import { addProduct } from "@/lib/actions/product"
 import { useState, useTransition } from "react"
 import { ImageDropzone } from "@/components/admin/image-dropzone"
 
 export function ProductForm() {
+  const { ArrowLeft, Loader2 } = Icons
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
