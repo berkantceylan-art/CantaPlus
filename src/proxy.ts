@@ -31,22 +31,27 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  // Sadece /dashboard ile başlayan rotaları koru
-  const isDashboardRoute = request.nextUrl.pathname.startsWith('/dashboard')
-  const isLoginPage = request.nextUrl.pathname === '/login'
+    // Sadece /dashboard ile başlayan rotaları koru
+    const isDashboardRoute = request.nextUrl.pathname.startsWith('/dashboard')
+    const isLoginPage = request.nextUrl.pathname === '/login'
 
-  // Kullanıcı oturum açmamışsa ve dashboard'a gitmeye çalışıyorsa login'e yönlendir
-  if (!user && isDashboardRoute) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
+    // Kullanıcı oturum açmamışsa ve dashboard'a gitmeye çalışıyorsa login'e yönlendir
+    if (!user && isDashboardRoute) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
 
-  // Kullanıcı oturum açmışsa ve login sayfasına gitmeye çalışıyorsa dashboard'a yönlendir
-  if (user && isLoginPage) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    // Kullanıcı oturum açmışsa ve login sayfasına gitmeye çalışıyorsa dashboard'a yönlendir
+    if (user && isLoginPage) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+  } catch (error) {
+    // Supabase tarafında bir hata olsa bile sitenin geri kalanını çökertme
+    console.error('[Proxy Error]:', error)
   }
 
   return response
