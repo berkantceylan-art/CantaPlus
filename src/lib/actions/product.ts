@@ -4,18 +4,27 @@ import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { marketplaceSync } from "@/lib/marketplace/sync-service"
+import { productSchema } from "@/lib/validations/product"
 
 export async function addProduct(formData: FormData) {
   const supabase = await createClient()
   
-  const name = formData.get("name") as string
-  const description = formData.get("description") as string
-  const priceStr = formData.get("price") as string
-  const stockStr = formData.get("stock") as string
-  
-  if (!name || !priceStr || !stockStr) {
-    return { error: "Lütfen zorunlu alanları (Ad, Fiyat, Stok) doldurun." }
+  // 1. Zod Doğrulaması
+  const rawData = {
+    name: formData.get("name"),
+    description: formData.get("description"),
+    price: formData.get("price"),
+    stock: formData.get("stock"),
+    cost_price: formData.get("cost_price"),
   }
+
+  const validatedFields = productSchema.safeParse(rawData)
+
+  if (!validatedFields.success) {
+    return { error: "Doğrulama hatası: " + validatedFields.error.errors.map(e => e.message).join(", ") }
+  }
+
+  const { name, description, price, stock, cost_price } = validatedFields.data
 
   // Turkish character friendly slug generation
   const turkishMap: { [key: string]: string } = {
@@ -29,14 +38,11 @@ export async function addProduct(formData: FormData) {
     .replace(/[^a-z0-9-]/g, "") 
     + "-" + Math.floor(Math.random() * 1000)
 
-  const price = parseFloat(priceStr)
-  const stock = parseInt(stockStr, 10)
-  
   const imageFiles = formData.getAll("images") as File[]
   const imageUrls: string[] = []
 
   for (const file of imageFiles) {
-    if (file.size > 0) {
+    if (file.size > 0 && typeof file !== 'string') {
       const fileExt = file.name.split('.').pop()
       const fileName = `${slug}-${Math.random()}.${fileExt}`
       const filePath = `public/${fileName}`
@@ -62,6 +68,7 @@ export async function addProduct(formData: FormData) {
     slug,
     description,
     price,
+    cost_price: cost_price || 0,
     stock,
     images: imageUrls
   }).select().single()
@@ -71,18 +78,19 @@ export async function addProduct(formData: FormData) {
     return { error: `Ürün veritabanına eklenemedi: ${dbError.message}` }
   }
 
-  // 2. Stok Logu Oluştur (V2 Corporate)
-  const { error: logError } = await supabase.from("stock_logs").insert({
+  // 2. Envanter Logu Oluştur (V4)
+  const { error: logError } = await supabase.from("inventory_logs").insert({
     product_id: newProduct.id,
     change_amount: stock,
     new_stock: stock,
-    reason: "initial_load",
-    platform: "ÇantaPlus"
+    type: 'purchase',
+    reason: "İlk Yükleme",
+    platform: "ÇantaPlus",
+    meta_data: { unit_cost: cost_price || 0 }
   })
 
   if (logError) {
-    console.error("Stok logu oluşturma hatası:", logError)
-    // Ürün eklendiği için devam ediyoruz ama log hatasını bildiriyoruz
+    console.error("Envanter logu oluşturma hatası:", logError)
   }
 
   // 3. Pazaryeri senkronizasyonunu tetikle

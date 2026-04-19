@@ -10,18 +10,39 @@ import Link from "next/link"
 import { addProduct } from "@/lib/actions/product"
 import { useState, useTransition } from "react"
 import { ImageDropzone } from "@/components/admin/image-dropzone"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { productSchema, type ProductInput } from "@/lib/validations/product"
 
 export function ProductForm() {
   const { ArrowLeft, Loader2 } = Icons
   const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
+  const [serverError, setServerError] = useState<string | null>(null)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setError(null)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm<ProductInput>({
+    resolver: zodResolver(productSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      price: 0,
+      stock: 0,
+       cost_price: 0
+    }
+  })
+
+  const onSubmit = async (data: ProductInput) => {
+    setServerError(null)
     
-    const formData = new FormData(e.currentTarget)
+    const formData = new FormData()
+    Object.entries(data).forEach(([key, value]) => {
+      formData.append(key, String(value))
+    })
+    
     selectedFiles.forEach(file => {
       formData.append("images", file)
     })
@@ -29,7 +50,7 @@ export function ProductForm() {
     startTransition(async () => {
       const result = await addProduct(formData)
       if (result?.error) {
-        setError(result.error)
+        setServerError(result.error)
       }
     })
   }
@@ -46,7 +67,7 @@ export function ProductForm() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-20">
+      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-20">
         <div className="lg:col-span-2 space-y-6">
           <Card className="border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm">
             <CardHeader className="bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
@@ -54,9 +75,9 @@ export function ProductForm() {
               <CardDescription className="text-xs uppercase tracking-widest font-bold text-zinc-500">Temel tanımlamalar ve içerik</CardDescription>
             </CardHeader>
             <CardContent className="p-8 space-y-6">
-              {error && (
+              {serverError && (
                 <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-xs font-bold uppercase tracking-wider border border-red-100">
-                  {error}
+                  {serverError}
                 </div>
               )}
 
@@ -64,18 +85,18 @@ export function ProductForm() {
                 <Label htmlFor="name" className="text-xs font-black uppercase tracking-widest text-zinc-500">Ürün Adı *</Label>
                 <Input 
                   id="name" 
-                  name="name" 
+                  {...register("name")}
                   placeholder="Örn: Siyah Deri Çapraz Çanta" 
-                  required 
-                  className="rounded-xl h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary font-medium"
+                  className={`rounded-xl h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary font-medium ${errors.name ? 'border-red-500' : ''}`}
                 />
+                {errors.name && <p className="text-[10px] text-red-500 font-bold uppercase">{errors.name.message}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="description" className="text-xs font-black uppercase tracking-widest text-zinc-500">Açıklama</Label>
                 <Textarea 
                   id="description" 
-                  name="description" 
+                  {...register("description")}
                   placeholder="Ürününüzü detaylıca anlatın..." 
                   rows={6} 
                   className="rounded-2xl border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary resize-none"
@@ -103,11 +124,17 @@ export function ProductForm() {
             <CardContent className="p-8 space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="price" className="text-xs font-black uppercase tracking-widest text-zinc-500">Satış Fiyatı (₺) *</Label>
-                <Input id="price" name="price" type="number" step="0.01" min="0" placeholder="0.00" required className="rounded-xl h-12 border-zinc-200 dark:border-zinc-800" />
+                <Input id="price" type="number" step="0.01" {...register("price")} placeholder="0.00" className="rounded-xl h-12 border-zinc-200 dark:border-zinc-800" />
+                {errors.price && <p className="text-[10px] text-red-500 font-bold uppercase">{errors.price.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cost_price" className="text-xs font-black uppercase tracking-widest text-zinc-500">Maliyet (₺)</Label>
+                <Input id="cost_price" type="number" step="0.01" {...register("cost_price")} placeholder="0.00" className="rounded-xl h-12 border-zinc-200 dark:border-zinc-800" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="stock" className="text-xs font-black uppercase tracking-widest text-zinc-500">Başlangıç Stoğu *</Label>
-                <Input id="stock" name="stock" type="number" min="0" placeholder="Adet" required className="rounded-xl h-12 border-zinc-200 dark:border-zinc-800" />
+                <Input id="stock" type="number" {...register("stock")} placeholder="Adet" className="rounded-xl h-12 border-zinc-200 dark:border-zinc-800" />
+                {errors.stock && <p className="text-[10px] text-red-500 font-bold uppercase">{errors.stock.message}</p>}
               </div>
             </CardContent>
           </Card>
@@ -126,7 +153,7 @@ export function ProductForm() {
               >
                 {isPending ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Icons.Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     İşleniyor...
                   </>
                 ) : (
