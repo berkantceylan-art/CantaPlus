@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/sheet"
 import { useCartStore } from "@/store/cartStore"
 import { ShoppingBag, X, Plus, Minus } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import Image from "next/image"
@@ -28,15 +28,13 @@ export function CartDrawer() {
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <ShoppingBag className="h-5 w-5" />
-          {totalItems > 0 && (
-            <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-              {totalItems}
-            </span>
-          )}
-        </Button>
+      <SheetTrigger className={buttonVariants({ variant: "ghost", size: "icon", className: "relative" })}>
+        <ShoppingBag className="h-5 w-5" />
+        {totalItems > 0 && (
+          <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+            {totalItems}
+          </span>
+        )}
       </SheetTrigger>
       <SheetContent className="flex w-full flex-col pr-0 sm:max-w-lg">
         <SheetHeader className="px-1">
@@ -122,11 +120,9 @@ export function CartDrawer() {
               <p className="mt-1 text-xs text-muted-foreground">
                 Kargo ve vergiler ödeme adımında hesaplanacaktır.
               </p>
-              <Button className="mt-6 w-full h-12 text-base" asChild onClick={() => setIsOpen(false)}>
-                <Link href="/odeme">
-                  Ödemeye Geç
-                </Link>
-              </Button>
+              <Link href="/odeme" className={buttonVariants({ className: "mt-6 w-full h-12 text-base" })} onClick={() => setIsOpen(false)}>
+                Ödemeye Geç
+              </Link>
             </div>
           </>
         ) : (
@@ -135,9 +131,9 @@ export function CartDrawer() {
                <ShoppingBag className="h-full w-full opacity-20" />
             </div>
             <p className="text-lg font-medium text-muted-foreground">Sepetiniz boş</p>
-            <Button variant="outline" asChild onClick={() => setIsOpen(false)}>
-              <Link href="/koleksiyon">Alışverişe Başla</Link>
-            </Button>
+            <Link href="/koleksiyon" className={buttonVariants({ variant: "outline" })} onClick={() => setIsOpen(false)}>
+              Alışverişe Başla
+            </Link>
           </div>
         )}
       </SheetContent>

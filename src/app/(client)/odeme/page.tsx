@@ -1,7 +1,7 @@
 "use client"
 
 import { useCartStore } from "@/store/cartStore"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -17,9 +17,9 @@ export default function CheckoutPage() {
       <div className="container mx-auto py-24 text-center">
         <h1 className="text-3xl font-bold mb-4">Sepetiniz Boş</h1>
         <p className="text-muted-foreground mb-8">Ödeme yapabilmek için sepetinize ürün eklemelisiniz.</p>
-        <Button asChild>
-          <a href="/koleksiyon">Alışverişe Başla</a>
-        </Button>
+        <a href="/koleksiyon" className={buttonVariants()}>
+          Alışverişe Başla
+        </a>
       </div>
     )
   }
