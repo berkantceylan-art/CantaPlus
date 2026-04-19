@@ -8,6 +8,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useParams } from "next/navigation"
+import { ARPreview } from "@/components/store/ar-preview"
 
 export default function ProductDetailPage() {
   const params = useParams()
@@ -134,13 +135,16 @@ export default function ProductDetailPage() {
 
           <div className="space-y-6 pt-6 border-t border-border">
             <div className="flex flex-col gap-3">
-              <Button size="lg" className="w-full h-14 text-lg rounded-xl" onClick={handleAddToCart}>
+              <Button size="lg" className="w-full h-14 text-lg rounded-xl gold-gradient border-none" onClick={handleAddToCart}>
                 <ShoppingBag className="mr-2 h-5 w-5" /> Sepete Ekle
               </Button>
               <p className="text-xs text-center text-muted-foreground">
                 Şu anda stokta {product.stock} adet ürün bulunuyor.
               </p>
             </div>
+
+            {/* AR Experience Placeholder */}
+            <ARPreview />
 
             {/* Features/Trust badges */}
             <div className="grid grid-cols-1 gap-4 pt-6">

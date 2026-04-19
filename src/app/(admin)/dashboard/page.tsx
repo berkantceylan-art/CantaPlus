@@ -3,6 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Package, DollarSign, Users, ArrowUpRight, TrendingUp } from "lucide-react"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import { AIFinanceSummary } from "@/components/admin/ai-finance-summary"
 
 const data = [
   { name: "Pzt", satis: 4000, trendyol: 2400 },
@@ -21,6 +22,8 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold tracking-tight">Dashboard Overview</h1>
         <p className="text-muted-foreground">Mağazanızın bugünkü genel durumu.</p>
       </div>
+
+      <AIFinanceSummary />
 
       {/* İstatistik Kartları */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

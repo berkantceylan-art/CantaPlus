@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Package, LayoutDashboard, ShoppingCart, Settings, Users, ArrowLeft, LogOut } from "lucide-react"
+import { Package, LayoutDashboard, ShoppingCart, Settings, Users, ArrowLeft, LogOut, Zap } from "lucide-react"
 import { logout } from "@/lib/actions/auth"
 import { Button } from "@/components/ui/button"
 
@@ -34,6 +34,10 @@ export default function AdminLayout({
           <Link href="/dashboard/musteriler" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted text-muted-foreground">
             <Users className="h-4 w-4" />
             Müşteriler
+          </Link>
+          <Link href="/dashboard/pazaryeri" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted text-primary font-bold group">
+            <Zap className="h-4 w-4 group-hover:animate-pulse" />
+            Pazaryeri Komuta
           </Link>
           <Link href="/dashboard/ayarlar" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted text-muted-foreground">
             <Settings className="h-4 w-4" />

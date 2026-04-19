@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { useTheme } from 'next-themes'
 import { useState, useEffect } from 'react'
 import { CartDrawer } from './cart-drawer'
+import { VisualSearch } from '../store/visual-search'
 
 export function Navbar() {
   const { theme, setTheme } = useTheme()
@@ -49,9 +50,12 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <VisualSearch />
           <Button variant="ghost" size="icon">
             <Search className="h-5 w-5" />
           </Button>
+        </div>
           <Button variant="ghost" size="icon" className="hidden sm:inline-flex">
             <User className="h-5 w-5" />
           </Button>

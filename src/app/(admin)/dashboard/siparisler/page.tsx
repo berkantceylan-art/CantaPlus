@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu"
 import { useState } from "react"
+import { InvoiceModal } from "@/components/admin/invoice-modal"
 
 const orders = [
   {
@@ -64,6 +65,13 @@ const orders = [
 
 export default function OrdersPage() {
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedOrder, setSelectedOrder] = useState<any>(null)
+  const [isInvoiceOpen, setIsInvoiceOpen] = useState(false)
+
+  const openInvoice = (order: any) => {
+    setSelectedOrder(order)
+    setIsInvoiceOpen(true)
+  }
 
   return (
     <div className="space-y-6">
@@ -141,7 +149,7 @@ export default function OrdersPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>İşlemler</DropdownMenuLabel>
                           <DropdownMenuItem>Sipariş Detayı</DropdownMenuItem>
-                          <DropdownMenuItem>Fatura Görüntüle</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openInvoice(order)}>Fatura Görüntüle</DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-blue-500">Kargo Etiketi Yazdır</DropdownMenuItem>
                           <DropdownMenuItem className="text-red-500">Siparişi İptal Et</DropdownMenuItem>
@@ -155,6 +163,12 @@ export default function OrdersPage() {
           </div>
         </CardContent>
       </Card>
+
+      <InvoiceModal 
+        isOpen={isInvoiceOpen} 
+        onClose={() => setIsInvoiceOpen(false)} 
+        order={selectedOrder} 
+      />
     </div>
   )
 }
