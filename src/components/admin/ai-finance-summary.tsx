@@ -5,13 +5,22 @@ import { Brain, TrendingUp, Wallet, ArrowDownRight, Sparkles, Receipt, Truck } f
 import { motion } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { getFinanceStats, getAIFinanceSummary } from "@/lib/actions/finance"
 
 export function AIFinanceSummary() {
   const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState<any>(null)
+  const [aiSummary, setAiSummary] = useState<any>(null)
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1500)
-    return () => clearTimeout(timer)
+    async function fetchData() {
+      const financeStats = await getFinanceStats()
+      const ai = await getAIFinanceSummary()
+      setStats(financeStats)
+      setAiSummary(ai)
+      setLoading(false)
+    }
+    fetchData()
   }, [])
 
   if (loading) {
@@ -42,10 +51,10 @@ export function AIFinanceSummary() {
 
             <div className="space-y-3">
               <h3 className="text-xl font-bold text-zinc-100 text-luxury">
-                Satışlarınızda bu hafta <span className="text-primary">%14 artış</span> gözlemlendi.
+                Satışlarınızda bu dönem <span className="text-primary">%{aiSummary?.margin.toFixed(1)} kâr marjı</span> korundu.
               </h3>
               <p className="text-zinc-400 text-sm leading-relaxed max-w-2xl">
-                Pazaryeri komisyonları (₺14.200) ve kargo maliyetlerinizi (₺8.400) düştüğümüzde, net kâr marjınız <span className="text-zinc-200">%22 seviyesine</span> yükseldi. Trendyol üzerindeki indirimli fiyatlarınızın stok devir hızını artırdığı tespit edildi.
+                {aiSummary?.summary}
               </p>
             </div>
 
@@ -65,9 +74,9 @@ export function AIFinanceSummary() {
               <div className="flex items-center gap-1.5 text-zinc-500 text-[10px] font-bold uppercase tracking-wider">
                 <Wallet className="h-3 w-3" /> Brüt Ciro
               </div>
-              <p className="text-2xl font-bold text-zinc-100">₺142.500</p>
+              <p className="text-2xl font-bold text-zinc-100">₺{stats?.totalRevenue.toLocaleString("tr-TR")}</p>
               <div className="flex items-center gap-1 text-[10px] text-green-500">
-                <TrendingUp className="h-3 w-3" /> +12%
+                <TrendingUp className="h-3 w-3" /> Canlı
               </div>
             </div>
 
@@ -75,9 +84,9 @@ export function AIFinanceSummary() {
               <div className="flex items-center gap-1.5 text-zinc-500 text-[10px] font-bold uppercase tracking-wider">
                 <Receipt className="h-3 w-3" /> Komisyonlar
               </div>
-              <p className="text-2xl font-bold text-zinc-100 italic opacity-80">₺14.250</p>
+              <p className="text-2xl font-bold text-zinc-100 italic opacity-80">₺{stats?.totalCommission.toLocaleString("tr-TR")}</p>
               <div className="flex items-center gap-1 text-[10px] text-zinc-500">
-                Sabit Oran %10
+                Toplam Kesinti
               </div>
             </div>
 
@@ -85,9 +94,9 @@ export function AIFinanceSummary() {
               <div className="flex items-center gap-1.5 text-zinc-500 text-[10px] font-bold uppercase tracking-wider">
                 <Truck className="h-3 w-3" /> Kargo Maliyeti
               </div>
-              <p className="text-2xl font-bold text-zinc-100">₺8.400</p>
+              <p className="text-2xl font-bold text-zinc-100">₺{stats?.totalShipping.toLocaleString("tr-TR")}</p>
               <div className="text-[10px] text-zinc-500">
-                Ort. ₺45 / gönderi
+                Lojistik Gideri
               </div>
             </div>
 
@@ -95,9 +104,9 @@ export function AIFinanceSummary() {
               <div className="flex items-center gap-1.5 text-primary text-[10px] font-bold uppercase tracking-wider">
                 <Sparkles className="h-3 w-3" /> Net Kâr
               </div>
-              <p className="text-2xl font-bold text-primary">₺119.850</p>
+              <p className="text-2xl font-bold text-primary">₺{stats?.netProfit.toLocaleString("tr-TR")}</p>
               <div className="flex items-center gap-1 text-[10px] text-primary/70">
-                <TrendingUp className="h-3 w-3" /> Rekor Seviye
+                <TrendingUp className="h-3 w-3" /> Güncel Veri
               </div>
             </div>
           </div>

@@ -16,6 +16,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { getMarketplaceStats, syncMarketplace } from "@/lib/actions/marketplace"
+import { useEffect } from "react"
 
 const platforms = [
   { id: "trendyol", name: "Trendyol", color: "#f27a1a", status: "active", products: 124, lastSync: "2 saat önce" },
@@ -28,26 +30,36 @@ export default function MarketplaceCommandCenter() {
   const [syncing, setSyncing] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
+  const [stats, setStats] = useState<any>(null)
 
-  const handleSync = (id: string) => {
+  useEffect(() => {
+    async function loadStats() {
+      const data = await getMarketplaceStats()
+      setStats(data)
+    }
+    loadStats()
+  }, [])
+
+  const handleSync = async (id: string) => {
     setSyncing(id)
     setProgress(0)
     
+    // UI Progress animasyonu
     const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval)
-          return 100
-        }
-        return prev + 5
-      })
+      setProgress(prev => (prev >= 95 ? 95 : prev + 5))
     }, 100)
 
-    setTimeout(() => {
-      setSyncing(null)
-      setSuccess(id)
-      setTimeout(() => setSuccess(null), 3000)
-    }, 2500)
+    try {
+      await syncMarketplace(id)
+      setProgress(100)
+    } finally {
+      clearInterval(interval)
+      setTimeout(() => {
+        setSyncing(null)
+        setSuccess(id)
+        setTimeout(() => setSuccess(null), 3000)
+      }, 500)
+    }
   }
 
   const syncAll = () => {
@@ -95,9 +107,9 @@ export default function MarketplaceCommandCenter() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-zinc-100">258 / 312</div>
-              <Progress value={82} className="h-1 mt-4 bg-zinc-800" />
-              <p className="text-[10px] text-zinc-500 mt-2 uppercase tracking-widest font-bold">Ürünlerin %82'si pazaryerlerinde yayında</p>
+              <div className="text-3xl font-bold text-zinc-100">{stats?.matchedProducts || 0} / {stats?.totalProducts || 0}</div>
+              <Progress value={stats ? (stats.matchedProducts / stats.totalProducts) * 100 : 0} className="h-1 mt-4 bg-zinc-800" />
+              <p className="text-[10px] text-zinc-500 mt-2 uppercase tracking-widest font-bold">Ürünlerin %{stats ? ((stats.matchedProducts / stats.totalProducts) * 100).toFixed(0) : 0}'si pazaryerlerinde yayında</p>
             </CardContent>
           </Card>
 
