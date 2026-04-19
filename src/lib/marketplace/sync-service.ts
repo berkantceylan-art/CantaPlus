@@ -1,3 +1,10 @@
+import { 
+  MarketplaceAdapter, 
+  TrendyolAdapter, 
+  HepsiburadaAdapter, 
+  N11Adapter 
+} from "./adapters";
+
 /**
  * Omni-Nexus V3 - Merkezi Senkronizasyon Motoru
  * Tüm pazaryerleri için 'Single Source of Truth' (Tek Doğruluk Kaynağı) görevi görür.
