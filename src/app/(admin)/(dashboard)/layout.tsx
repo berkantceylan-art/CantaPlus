@@ -1,5 +1,7 @@
 import Link from "next/link"
-import { Package, LayoutDashboard, ShoppingCart, Settings, Users, ArrowLeft } from "lucide-react"
+import { Package, LayoutDashboard, ShoppingCart, Settings, Users, ArrowLeft, LogOut } from "lucide-react"
+import { logout } from "@/lib/actions/auth"
+import { Button } from "@/components/ui/button"
 
 export default function AdminLayout({
   children,
@@ -38,11 +40,17 @@ export default function AdminLayout({
             Ayarlar / Entegrasyon
           </Link>
         </nav>
-        <div className="border-t p-4">
+        <div className="border-t p-4 space-y-2">
           <Link href="/" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted text-muted-foreground">
             <ArrowLeft className="h-4 w-4" />
             Mağazaya Dön
           </Link>
+          <form action={logout}>
+            <button type="submit" className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors">
+              <LogOut className="h-4 w-4" />
+              Güvenli Çıkış
+            </button>
+          </form>
         </div>
       </aside>
 
