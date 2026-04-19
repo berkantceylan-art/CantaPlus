@@ -12,14 +12,19 @@ export async function addProduct(formData: FormData) {
   const description = formData.get("description") as string
   const priceStr = formData.get("price") as string
   const stockStr = formData.get("stock") as string
-  const imageFile = formData.get("image") as File | null
   
   if (!name || !priceStr || !stockStr) {
     return { error: "Lütfen zorunlu alanları (Ad, Fiyat, Stok) doldurun." }
   }
 
-  // Generate a basic slug
-  const slug = name.toLowerCase()
+  // Turkish character friendly slug generation
+  const turkishMap: { [key: string]: string } = {
+    'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u',
+    'Ç': 'c', 'Ğ': 'g', 'İ': 'i', 'Ö': 'o', 'Ş': 's', 'Ü': 'u'
+  }
+  
+  let slug = name.split('').map(char => turkishMap[char] || char).join('')
+    .toLowerCase()
     .replace(/ /g, "-")
     .replace(/[^a-z0-9-]/g, "") 
     + "-" + Math.floor(Math.random() * 1000)
@@ -45,10 +50,13 @@ export async function addProduct(formData: FormData) {
           .from('product-images')
           .getPublicUrl(filePath)
         imageUrls.push(publicUrlData.publicUrl)
+      } else {
+        console.error("Görsel yükleme hatası:", uploadError)
       }
     }
   }
 
+  // 1. Ürünü ekle
   const { data: newProduct, error: dbError } = await supabase.from("products").insert({
     name,
     slug,
@@ -59,12 +67,12 @@ export async function addProduct(formData: FormData) {
   }).select().single()
 
   if (dbError) {
-    console.error("Veritabanı hatası:", dbError)
-    return { error: "Ürün veritabanına eklenemedi." }
+    console.error("Ürün ekleme hatası detayları:", dbError)
+    return { error: `Ürün veritabanına eklenemedi: ${dbError.message}` }
   }
 
-  // Stok Logu Oluştur (V2 Corporate)
-  await supabase.from("stock_logs").insert({
+  // 2. Stok Logu Oluştur (V2 Corporate)
+  const { error: logError } = await supabase.from("stock_logs").insert({
     product_id: newProduct.id,
     change_amount: stock,
     new_stock: stock,
@@ -72,14 +80,16 @@ export async function addProduct(formData: FormData) {
     platform: "ÇantaPlus"
   })
 
-  if (dbError) {
-    console.error("Veritabanı hatası:", dbError)
-    return { error: "Ürün veritabanına eklenemedi." }
+  if (logError) {
+    console.error("Stok logu oluşturma hatası:", logError)
+    // Ürün eklendiği için devam ediyoruz ama log hatasını bildiriyoruz
   }
 
-  // Pazaryeri senkronizasyonunu tetikle
+  // 3. Pazaryeri senkronizasyonunu tetikle
   try {
-    await marketplaceSync.syncAll(newProduct)
+    if (newProduct) {
+      await marketplaceSync.syncAll(newProduct)
+    }
   } catch (err) {
     console.error("Pazaryeri senkronizasyon hatası (Hata göz ardı edildi):", err)
   }

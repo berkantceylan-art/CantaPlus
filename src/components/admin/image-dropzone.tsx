@@ -14,25 +14,21 @@ interface ImageDropzoneProps {
 export function ImageDropzone({ onFilesChange, maxFiles = 5 }: ImageDropzoneProps) {
   const [previews, setPreviews] = useState<{ file: File; preview: string }[]>([])
 
+  React.useEffect(() => {
+    onFilesChange(previews.map(p => p.file))
+  }, [previews, onFilesChange])
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newPreviews = acceptedFiles.map(file => ({
       file,
       preview: URL.createObjectURL(file)
     }))
     
-    setPreviews(prev => {
-      const updated = [...prev, ...newPreviews].slice(0, maxFiles)
-      onFilesChange(updated.map(p => p.file))
-      return updated
-    })
-  }, [maxFiles, onFilesChange])
+    setPreviews(prev => [...prev, ...newPreviews].slice(0, maxFiles))
+  }, [maxFiles])
 
   const removeFile = (index: number) => {
-    setPreviews(prev => {
-      const updated = prev.filter((_, i) => i !== index)
-      onFilesChange(updated.map(p => p.file))
-      return updated
-    })
+    setPreviews(prev => prev.filter((_, i) => i !== index))
   }
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
