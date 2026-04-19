@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import Link from "next/link"
 
 export default async function CategoryPlaceholder({
@@ -17,9 +17,9 @@ export default async function CategoryPlaceholder({
       <p className="text-muted-foreground mb-8 text-lg max-w-lg">
         Bu sayfa şu anda yapım aşamasındadır. ({category}) kategorisindeki ürünler çok yakında burada listelenecektir.
       </p>
-      <Button asChild size="lg">
-        <Link href="/">Ana Sayfaya Dön</Link>
-      </Button>
+      <Link href="/" className={buttonVariants({ size: "lg" })}>
+        Ana Sayfaya Dön
+      </Link>
     </div>
   )
 }
