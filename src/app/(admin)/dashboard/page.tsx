@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = 'force-dynamic'
+
 import { BentoGrid, BentoCard } from "@/components/dashboard/bento-grid"
 import { RevenueAreaChart } from "@/components/dashboard/revenue-area-chart"
 import { QuickActions } from "@/components/dashboard/quick-actions"
