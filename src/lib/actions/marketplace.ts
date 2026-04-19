@@ -34,13 +34,61 @@ export async function getMarketplaceStats() {
 
   return stats
 }
-
 export async function syncMarketplace(platform: string) {
   // Simüle edilen gecikme
   await new Promise(resolve => setTimeout(resolve, 2000))
   
-  // Burada gerçek bir API çağrısı yapılabilir
-  // Örn: Trendyol API -> Stok Güncelle
-  
   return { success: true, platform }
+}
+
+export async function getIntegrations() {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("integrations")
+    .select("*")
+  
+  if (error) {
+    console.error("[Get Integrations Error]:", error)
+    return []
+  }
+  return data
+}
+
+export async function updateIntegration(formData: FormData) {
+  const supabase = await createClient()
+  
+  const id = formData.get("id") as string
+  const merchant_id = formData.get("merchant_id") as string
+  const api_key = formData.get("api_key") as string
+  const api_secret = formData.get("api_secret") as string
+  
+  const { error } = await supabase
+    .from("integrations")
+    .update({
+      merchant_id,
+      api_key,
+      api_secret,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", id)
+
+  if (error) {
+    console.error("[Update Integration Error]:", error)
+    return { success: false, error: "Ayarlar kaydedilemedi." }
+  }
+
+  return { success: true }
+}
+
+export async function testConnection(platform: string) {
+  // Gerçek API bağlantı testi simülasyonu
+  await new Promise(resolve => setTimeout(resolve, 1500))
+  
+  // Burada platforma göre (Trendyol/HB) bir sağlık kontrolü (Health Check) çağrısı yapılabilir
+  const isSuccess = Math.random() > 0.1 // %10 hata payı simülasyonu
+  
+  return { 
+    success: isSuccess, 
+    message: isSuccess ? "Bağlantı başarılı. Servisler aktif." : "Bağlantı hatası: API anahtarlarını kontrol edin." 
+  }
 }

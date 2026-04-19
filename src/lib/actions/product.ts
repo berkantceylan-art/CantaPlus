@@ -27,27 +27,26 @@ export async function addProduct(formData: FormData) {
   const price = parseFloat(priceStr)
   const stock = parseInt(stockStr, 10)
   
-  let imageUrl = ""
+  const imageFiles = formData.getAll("images") as File[]
+  const imageUrls: string[] = []
 
-  if (imageFile && imageFile.size > 0) {
-    const fileExt = imageFile.name.split('.').pop()
-    const fileName = `${slug}-${Math.random()}.${fileExt}`
-    const filePath = `public/${fileName}`
+  for (const file of imageFiles) {
+    if (file.size > 0) {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${slug}-${Math.random()}.${fileExt}`
+      const filePath = `public/${fileName}`
 
-    const { error: uploadError } = await supabase.storage
-      .from('product-images')
-      .upload(filePath, imageFile)
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, file)
 
-    if (uploadError) {
-      console.error("Görsel yükleme hatası:", uploadError)
-      return { error: "Görsel yüklenirken bir hata oluştu." }
+      if (!uploadError) {
+        const { data: publicUrlData } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(filePath)
+        imageUrls.push(publicUrlData.publicUrl)
+      }
     }
-
-    const { data: publicUrlData } = supabase.storage
-      .from('product-images')
-      .getPublicUrl(filePath)
-      
-    imageUrl = publicUrlData.publicUrl
   }
 
   const { data: newProduct, error: dbError } = await supabase.from("products").insert({
@@ -56,8 +55,22 @@ export async function addProduct(formData: FormData) {
     description,
     price,
     stock,
-    images: imageUrl ? [imageUrl] : []
+    images: imageUrls
   }).select().single()
+
+  if (dbError) {
+    console.error("Veritabanı hatası:", dbError)
+    return { error: "Ürün veritabanına eklenemedi." }
+  }
+
+  // Stok Logu Oluştur (V2 Corporate)
+  await supabase.from("stock_logs").insert({
+    product_id: newProduct.id,
+    change_amount: stock,
+    new_stock: stock,
+    reason: "initial_load",
+    platform: "ÇantaPlus"
+  })
 
   if (dbError) {
     console.error("Veritabanı hatası:", dbError)

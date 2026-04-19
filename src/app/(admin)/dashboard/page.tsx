@@ -2,17 +2,18 @@
 
 export const dynamic = 'force-dynamic'
 
+import { useState, useEffect } from "react"
 import { BentoGrid, BentoCard } from "@/components/dashboard/bento-grid"
 import { RevenueAreaChart } from "@/components/dashboard/revenue-area-chart"
 import { QuickActions } from "@/components/dashboard/quick-actions"
 import { AIFinanceSummary } from "@/components/admin/ai-finance-summary"
 import { DashboardCommandPalette } from "@/components/dashboard/command-palette"
 import { useRealtimeOrders } from "@/hooks/use-realtime-orders"
+import { getDashboardStats } from "@/lib/actions/dashboard"
 import { 
   DollarSign, 
   Package, 
   ShoppingCart, 
-  TrendingUp, 
   Activity, 
   Globe, 
   Zap, 
@@ -20,8 +21,18 @@ import {
 } from "lucide-react"
 
 export default function DashboardPage() {
+  const [stats, setStats] = useState<any>(null)
+  
   // Real-time sipariş takibini başlat
   useRealtimeOrders()
+
+  useEffect(() => {
+    async function fetchStats() {
+      const data = await getDashboardStats()
+      setStats(data)
+    }
+    fetchStats()
+  }, [])
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -73,9 +84,11 @@ export default function DashboardPage() {
           icon={<DollarSign className="h-5 w-5" />}
         >
           <div className="mt-2">
-            <div className="text-3xl font-black tabular-nums tracking-tighter">₺142.500</div>
-            <div className="flex items-center gap-1 text-[10px] text-green-500 font-bold mt-2">
-              <ArrowUpRight className="h-3 w-3" /> +12% GEÇEN AYA GÖRE
+            <div className="text-3xl font-black tabular-nums tracking-tighter">
+              ₺{stats?.totalRevenue.toLocaleString("tr-TR") || "..."}
+            </div>
+            <div className="flex items-center gap-1 text-[10px] text-green-500 font-bold mt-2 uppercase">
+              <ArrowUpRight className="h-3 w-3" /> Canlı Veri Akışı Aktif
             </div>
           </div>
         </BentoCard>
@@ -85,10 +98,12 @@ export default function DashboardPage() {
           className="lg:col-span-1"
           icon={<ShoppingCart className="h-5 w-5" />}
         >
-          <div className="mt-2">
-            <div className="text-3xl font-black tabular-nums tracking-tighter">48</div>
-            <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-bold mt-2 uppercase">
-              12 tanesi Trendyol'da
+          <div className="mt-2 text-right">
+            <div className="text-4xl font-black tabular-nums tracking-tighter">
+              {stats?.activeOrders || "0"}
+            </div>
+            <div className="flex items-center justify-end gap-1 text-[10px] text-zinc-500 font-bold mt-2 uppercase tracking-widest">
+              Hazırlanan / Kargoda
             </div>
           </div>
         </BentoCard>
@@ -99,22 +114,30 @@ export default function DashboardPage() {
           icon={<Package className="h-5 w-5" />}
         >
           <div className="mt-2">
-            <div className="text-3xl font-black tabular-nums tracking-tighter">2.540</div>
-            <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-bold mt-2 uppercase tracking-widest leading-none">
-              %8 Kritik Seviyede
+            <div className="text-3xl font-black tabular-nums tracking-tighter">
+              {stats?.totalStock.toLocaleString("tr-TR") || "0"}
+            </div>
+            <div className="flex items-center gap-1 text-[10px] text-amber-500 font-bold mt-2 uppercase tracking-widest leading-none">
+              %{stats?.lowStockPercentage || "0"} KRİTİK SEVİYEDE
             </div>
           </div>
         </BentoCard>
 
         <BentoCard 
-          title="Platform Erişimi" 
+          title="Platform Sağlığı" 
           className="lg:col-span-1"
           icon={<Globe className="h-5 w-5" />}
         >
            <div className="mt-4 flex flex-wrap gap-2">
-              <div className="px-2 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 text-[10px] font-bold">TY: AKTİF</div>
-              <div className="px-2 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 text-[10px] font-bold">HB: AKTİF</div>
-              <div className="px-2 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 text-[10px] font-bold text-red-500">N11: HATA</div>
+              <div className="flex items-center gap-2 px-3 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase text-zinc-600 dark:text-zinc-400">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500" /> TY
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase text-zinc-600 dark:text-zinc-400">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500" /> HB
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase text-zinc-600 dark:text-zinc-400 opacity-50">
+                <div className="w-1.5 h-1.5 rounded-full bg-zinc-300" /> n11
+              </div>
            </div>
         </BentoCard>
       </BentoGrid>

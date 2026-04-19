@@ -1,21 +1,21 @@
--- Profiles Table (RBAC)
-CREATE TABLE profiles (
+-- 1. Profiles Tablosu (RBAC) - Yoksa Oluştur
+CREATE TABLE IF NOT EXISTS profiles (
   id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
   full_name TEXT,
   role TEXT DEFAULT 'staff', -- admin, staff
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Categories Table
-CREATE TABLE categories (
+-- 2. Kategoriler Tablosu - Yoksa Oluştur
+CREATE TABLE IF NOT EXISTS categories (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   slug TEXT NOT NULL UNIQUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Products Table
-CREATE TABLE products (
+-- 3. Ürünler Tablosu - Yoksa Oluştur
+CREATE TABLE IF NOT EXISTS products (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   slug TEXT NOT NULL UNIQUE,
@@ -29,8 +29,8 @@ CREATE TABLE products (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Stock Logs Table (V2 Corporate)
-CREATE TABLE stock_logs (
+-- 4. Stok Kayıtları Tablosu (V2 Corporate) - Yoksa Oluştur
+CREATE TABLE IF NOT EXISTS stock_logs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   product_id UUID REFERENCES products(id) ON DELETE CASCADE,
   change_amount INTEGER NOT NULL,
@@ -40,82 +40,72 @@ CREATE TABLE stock_logs (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Orders Table
-CREATE TABLE orders (
+-- 5. Siparişler Tablosu - Yoksa Oluştur
+CREATE TABLE IF NOT EXISTS orders (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  customer_id UUID, -- References auth.users or a custom customers table
+  customer_id UUID,
   total_price NUMERIC(10, 2) NOT NULL,
-  status TEXT NOT NULL DEFAULT 'pending', -- pending, processing, shipped, delivered, cancelled
-  platform TEXT NOT NULL DEFAULT 'ÇantaPlus', -- ÇantaPlus, Trendyol, Hepsiburada, etc.
+  status TEXT NOT NULL DEFAULT 'pending',
+  platform TEXT NOT NULL DEFAULT 'ÇantaPlus',
   invoice_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Order Items Table
-CREATE TABLE order_items (
+-- 6. Sipariş Kalemleri Tablosu - Yoksa Oluştur
+CREATE TABLE IF NOT EXISTS order_items (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
   product_id UUID REFERENCES products(id) ON DELETE SET NULL,
   quantity INTEGER NOT NULL,
   price NUMERIC(10, 2) NOT NULL,
-  commission_rate NUMERIC(5, 2) DEFAULT 0, -- Pazaryeri komisyon oranı (%)
-  shipping_cost NUMERIC(10, 2) DEFAULT 0, -- Bu kalem için kargo maliyeti
+  commission_rate NUMERIC(5, 2) DEFAULT 0,
+  shipping_cost NUMERIC(10, 2) DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Marketplace Mappings (V2)
-CREATE TABLE marketplace_mappings (
+-- 7. Pazaryeri Eşleşmeleri - Yoksa Oluştur
+CREATE TABLE IF NOT EXISTS marketplace_mappings (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   product_id UUID REFERENCES products(id) ON DELETE CASCADE,
-  platform TEXT NOT NULL, -- Trendyol, Hepsiburada, N11, Ciceksepeti
+  platform TEXT NOT NULL,
   external_sku TEXT NOT NULL,
   external_product_id TEXT,
-  sync_status TEXT DEFAULT 'active', -- active, paused, error
+  sync_status TEXT DEFAULT 'active',
   last_sync_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   UNIQUE(platform, external_sku)
 );
 
--- AI Price Logs & Suggestions (V2)
-CREATE TABLE ai_price_logs (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  product_id UUID REFERENCES products(id) ON DELETE CASCADE,
-  old_price NUMERIC(10, 2) NOT NULL,
-  new_price NUMERIC(10, 2) NOT NULL,
-  reason TEXT, -- 'Competitor price drop', 'Stock surplus', etc.
-  suggested_by_ai BOOLEAN DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- AI Finance Summaries (V2)
-CREATE TABLE ai_finance_summaries (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  analysis_date DATE DEFAULT CURRENT_DATE UNIQUE,
-  total_revenue NUMERIC(15, 2) NOT NULL,
-  total_commission NUMERIC(15, 2) NOT NULL,
-  total_shipping NUMERIC(15, 2) NOT NULL,
-  net_profit NUMERIC(15, 2) NOT NULL,
-  ai_summary TEXT, -- LLM tarafından üretilen metin özeti
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- Integrations Table
-CREATE TABLE integrations (
+-- 8. Entegrasyonlar Tablosu ve Sütun Kontrolü
+CREATE TABLE IF NOT EXISTS integrations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   platform_name TEXT NOT NULL UNIQUE,
   api_key TEXT,
   api_secret TEXT,
-  merchant_id TEXT, -- Trendyol/Hepsiburada özel
-  seller_id TEXT,
   is_active BOOLEAN DEFAULT false,
-  api_status TEXT DEFAULT 'idle', -- idle, testing, active, error
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Realtime Setup
-alter publication supabase_realtime add table products;
-alter publication supabase_realtime add table orders;
-alter publication supabase_realtime add table stock_logs;
-alter publication supabase_realtime add table integrations;
-alter publication supabase_realtime add table ai_price_logs;
+-- integrations tablosuna eksik sütunları güvenli şekilde ekle
+DO $$ 
+BEGIN 
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='integrations' AND column_name='merchant_id') THEN
+    ALTER TABLE integrations ADD COLUMN merchant_id TEXT;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='integrations' AND column_name='seller_id') THEN
+    ALTER TABLE integrations ADD COLUMN seller_id TEXT;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='integrations' AND column_name='api_status') THEN
+    ALTER TABLE integrations ADD COLUMN api_status TEXT DEFAULT 'idle';
+  END IF;
+END $$;
+
+-- 9. Realtime Ayarları (Tüm tablolar için)
+-- Not: Bu komutlar hata verirse Supabase panelinden manuel olarak de aktif edilebilir.
+BEGIN;
+  DROP PUBLICATION IF EXISTS supabase_realtime;
+  CREATE PUBLICATION supabase_realtime FOR TABLE products, orders, stock_logs, integrations, ai_price_logs;
+COMMIT;
