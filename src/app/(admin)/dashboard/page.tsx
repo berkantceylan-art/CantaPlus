@@ -95,7 +95,7 @@ export default function DashboardPage() {
                   <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₺${value}`} />
                   <Tooltip 
                     contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
-                    formatter={(value: number) => [`₺${value}`, ""]} 
+                    formatter={(value: any) => [`₺${value}`, ""]} 
                   />
                   <Line type="monotone" dataKey="satis" name="Kendi Sitemiz" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
                   <Line type="monotone" dataKey="trendyol" name="Trendyol" stroke="#f27a1a" strokeWidth={2} dot={false} />
