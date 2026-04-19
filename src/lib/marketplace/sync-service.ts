@@ -1,10 +1,7 @@
-import { 
-  MarketplaceAdapter, 
-  TrendyolAdapter, 
-  HepsiburadaAdapter, 
-  N11Adapter 
-} from "./adapters";
-
+/**
+ * Omni-Nexus V3 - Merkezi Senkronizasyon Motoru
+ * Tüm pazaryerleri için 'Single Source of Truth' (Tek Doğruluk Kaynağı) görevi görür.
+ */
 export class MarketplaceSyncService {
   private static instance: MarketplaceSyncService;
   private adapters: MarketplaceAdapter[];
@@ -24,32 +21,57 @@ export class MarketplaceSyncService {
     return MarketplaceSyncService.instance;
   }
 
-  async syncAll(product: any): Promise<boolean[]> {
-    console.log(`[SyncService] Tüm pazaryerleri için senkronizasyon başlatıldı: ${product.name}`);
+  /**
+   * Ürünü tüm platformlarda ilk kez senkronize eder.
+   */
+  async syncAll(product: any): Promise<{ platform: string, success: boolean }[]> {
+    console.log(`[Omni-Nexus] Global Senkronizasyon Başlatıldı: ${product.name}`);
     
-    const syncPromises = this.adapters.map(adapter => 
-      adapter.syncProduct(product)
-        .then(result => {
-          console.log(`[SyncService] ${adapter.name} senkronizasyonu ${result ? "başarılı" : "başarısız"}.`);
-          return result;
-        })
-        .catch(err => {
-          console.error(`[SyncService] ${adapter.name} senkronizasyon hatası:`, err);
-          return false;
-        })
+    const results = await Promise.all(
+      this.adapters.map(async (adapter) => {
+        try {
+          const success = await adapter.syncProduct(product);
+          return { platform: adapter.name, success };
+        } catch (err) {
+          return { platform: adapter.name, success: false };
+        }
+      })
     );
 
-    return Promise.all(syncPromises);
+    return results;
   }
 
-  async updateAllPrices(sku: string, price: number): Promise<boolean[]> {
-    const promises = this.adapters.map(adapter => adapter.updatePrice(sku, price));
-    return Promise.all(promises);
+  /**
+   * Stok değişimini tüm platformlara anlık (Realtime) olarak yayar.
+   * 'Single Source of Truth' prensibinin kalbidir.
+   */
+  async updateAllStocks(sku: string, newStock: number): Promise<{ platform: string, success: boolean }[]> {
+    console.log(`[Omni-Nexus] Stok Güncelleme Yayını (Broadcast): ${sku} -> ${newStock}`);
+    
+    const results = await Promise.all(
+      this.adapters.map(async (adapter) => {
+        const success = await adapter.updateStock(sku, newStock);
+        return { platform: adapter.name, success };
+      })
+    );
+
+    return results;
   }
 
-  async updateAllStocks(sku: string, stock: number): Promise<boolean[]> {
-    const promises = this.adapters.map(adapter => adapter.updateStock(sku, stock));
-    return Promise.all(promises);
+  /**
+   * Fiyat değişimini tüm platformlara yayar.
+   */
+  async updateAllPrices(sku: string, newPrice: number): Promise<{ platform: string, success: boolean }[]> {
+    console.log(`[Omni-Nexus] Fiyat Güncelleme Yayını (Broadcast): ${sku} -> ₺${newPrice}`);
+    
+    const results = await Promise.all(
+      this.adapters.map(async (adapter) => {
+        const success = await adapter.updatePrice(sku, newPrice);
+        return { platform: adapter.name, success };
+      })
+    );
+
+    return results;
   }
 }
 

@@ -1,3 +1,7 @@
+/**
+ * Omni-Nexus V3 - Marketplace Adapter System
+ * 'Single Source of Truth' (Merkezi Stok) mimarisi için optimize edilmiştir.
+ */
 export interface MarketplaceAdapter {
   name: string;
   updatePrice(sku: string, price: number): Promise<boolean>;
@@ -5,69 +9,89 @@ export interface MarketplaceAdapter {
   syncProduct(product: any): Promise<boolean>;
 }
 
-export class TrendyolAdapter implements MarketplaceAdapter {
+/**
+ * Base Adapter: Ortak mantığı barındıran temel sınıf.
+ */
+abstract class BaseAdapter {
+  protected async log(message: string, type: 'info' | 'error' = 'info') {
+    const timestamp = new Date().toISOString();
+    console.log(`[${this.constructor.name}] [${timestamp}] ${message}`);
+  }
+
+  protected async handleApiError(error: any, action: string) {
+    this.log(`Hata oluştu (${action}): ${error.message}`, 'error');
+    // Burada merkezi bir hata takip sistemine (Sentry vb.) log atılabilir.
+    return false;
+  }
+}
+
+export class TrendyolAdapter extends BaseAdapter implements MarketplaceAdapter {
   name = "Trendyol";
 
   async updatePrice(sku: string, price: number): Promise<boolean> {
-    console.log(`[Trendyol] Fiyat güncelleniyor: ${sku} -> ₺${price}`);
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return true;
+    try {
+      this.log(`Fiyat güncelleniyor: ${sku} -> ₺${price}`);
+      // TODO: process.env.TRENDYOL_API_KEY ile gerçek istek atılacak
+      await new Promise(resolve => setTimeout(resolve, 300));
+      return true;
+    } catch (e) { return this.handleApiError(e, 'updatePrice'); }
   }
 
   async updateStock(sku: string, stock: number): Promise<boolean> {
-    console.log(`[Trendyol] Stok güncelleniyor: ${sku} -> ${stock}`);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return true;
+    try {
+      this.log(`Stok güncelleniyor: ${sku} -> ${stock}`);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      return true;
+    } catch (e) { return this.handleApiError(e, 'updateStock'); }
   }
 
   async syncProduct(product: any): Promise<boolean> {
-    console.log(`[Trendyol] Ürün senkronize ediliyor: ${product.name}`);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    this.log(`Ürün senkronize ediliyor: ${product.name}`);
+    await new Promise(resolve => setTimeout(resolve, 500));
     return true;
   }
 }
 
-export class HepsiburadaAdapter implements MarketplaceAdapter {
+export class HepsiburadaAdapter extends BaseAdapter implements MarketplaceAdapter {
   name = "Hepsiburada";
 
   async updatePrice(sku: string, price: number): Promise<boolean> {
-    console.log(`[Hepsiburada] Fiyat güncelleniyor: ${sku} -> ₺${price}`);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    this.log(`Fiyat güncelleniyor: ${sku} -> ₺${price}`);
+    await new Promise(resolve => setTimeout(resolve, 300));
     return true;
   }
 
   async updateStock(sku: string, stock: number): Promise<boolean> {
-    console.log(`[Hepsiburada] Stok güncelleniyor: ${sku} -> ${stock}`);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    this.log(`Stok güncelleniyor: ${sku} -> ${stock}`);
+    await new Promise(resolve => setTimeout(resolve, 300));
     return true;
   }
 
   async syncProduct(product: any): Promise<boolean> {
-    console.log(`[Hepsiburada] Ürün senkronize ediliyor: ${product.name}`);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    this.log(`Ürün senkronize ediliyor: ${product.name}`);
+    await new Promise(resolve => setTimeout(resolve, 500));
     return true;
   }
 }
 
-export class N11Adapter implements MarketplaceAdapter {
+export class N11Adapter extends BaseAdapter implements MarketplaceAdapter {
   name = "N11";
 
   async updatePrice(sku: string, price: number): Promise<boolean> {
-    console.log(`[N11] Fiyat güncelleniyor: ${sku} -> ₺${price}`);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    this.log(`Fiyat güncelleniyor: ${sku} -> ₺${price}`);
+    await new Promise(resolve => setTimeout(resolve, 300));
     return true;
   }
 
   async updateStock(sku: string, stock: number): Promise<boolean> {
-    console.log(`[N11] Stok güncelleniyor: ${sku} -> ${stock}`);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    this.log(`Stok güncelleniyor: ${sku} -> ${stock}`);
+    await new Promise(resolve => setTimeout(resolve, 300));
     return true;
   }
 
   async syncProduct(product: any): Promise<boolean> {
-    console.log(`[N11] Ürün senkronize ediliyor: ${product.name}`);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    this.log(`Ürün senkronize ediliyor: ${product.name}`);
+    await new Promise(resolve => setTimeout(resolve, 500));
     return true;
   }
 }

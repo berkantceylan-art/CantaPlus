@@ -40,12 +40,18 @@ CREATE TABLE IF NOT EXISTS stock_logs (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 5. Siparişler Tablosu - Yoksa Oluştur
+-- 5. Siparişler Tablosu - Güncellendi (V3 e-Logo Entegrasyonu için)
 CREATE TABLE IF NOT EXISTS orders (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   customer_id UUID,
+  customer_full_name TEXT,
+  customer_email TEXT,
+  customer_phone TEXT,
+  customer_address TEXT,
+  tax_id TEXT, -- TCKN veya VKN
+  tax_office TEXT,
   total_price NUMERIC(10, 2) NOT NULL,
-  status TEXT NOT NULL DEFAULT 'pending',
+  status TEXT NOT NULL DEFAULT 'pending', -- pending, paid, shipped, delivered, cancelled
   platform TEXT NOT NULL DEFAULT 'ÇantaPlus',
   invoice_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -103,12 +109,27 @@ BEGIN
   END IF;
 END $$;
 
+-- 9. Faturalar Tablosu (Omni-Nexus V3)
+CREATE TABLE IF NOT EXISTS invoices (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
+  invoice_no TEXT, -- Logo'dan dönen fatura numarası (Örn: GIB2026000000123)
+  uuid UUID, -- Logo'daki ETTN numarası
+  status TEXT DEFAULT 'draft', -- draft, signed, sent, error
+  external_id TEXT, -- Logo'daki dahili ID
+  pdf_url TEXT,
+  xml_url TEXT,
+  error_message TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- 10. RLS Politikaları (Güvenlik)
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stock_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
 
 -- Ürünler için tam erişim
 DROP POLICY IF EXISTS "Authenticated users can manage products" ON products;
@@ -128,4 +149,9 @@ CREATE POLICY "Authenticated users can manage categories" ON categories
 -- Siparişler için tam erişim
 DROP POLICY IF EXISTS "Authenticated users can manage orders" ON orders;
 CREATE POLICY "Authenticated users can manage orders" ON orders 
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Faturalar için tam erişim (V3)
+DROP POLICY IF EXISTS "Authenticated users can manage invoices" ON invoices;
+CREATE POLICY "Authenticated users can manage invoices" ON invoices 
   FOR ALL TO authenticated USING (true) WITH CHECK (true);

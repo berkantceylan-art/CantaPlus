@@ -40,3 +40,42 @@ export async function getDashboardStats() {
     lowStockPercentage: stockData?.length ? Math.round(((lowStockCount || 0) / stockData.length) * 100) : 0
   }
 }
+
+export async function getRevenueChartData() {
+  const supabase = await createClient()
+  
+  // Son 7 günü al
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  
+  const { data: orders } = await supabase
+    .from("orders")
+    .select("created_at, total_price, platform")
+    .gte("created_at", sevenDaysAgo.toISOString())
+    .eq("status", "delivered")
+
+  // Gün bazlı gruplama
+  const days = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"]
+  const chartData = days.map(day => ({
+    name: day,
+    site: 0,
+    trendyol: 0,
+    hepsiburada: 0,
+    n11: 0
+  }))
+
+  orders?.forEach(order => {
+    const date = new Date(order.created_at)
+    const dayName = days[date.getDay()]
+    const dataEntry = chartData.find(d => d.name === dayName)
+    
+    if (dataEntry) {
+      const platformKey = order.platform.toLowerCase() === 'çantaplus' ? 'site' : order.platform.toLowerCase()
+      if (platformKey in dataEntry) {
+        (dataEntry as any)[platformKey] += Number(order.total_price)
+      }
+    }
+  })
+
+  return chartData
+}

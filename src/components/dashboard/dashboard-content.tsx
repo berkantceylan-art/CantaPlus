@@ -5,7 +5,6 @@ import { BentoGrid, BentoCard } from "@/components/dashboard/bento-grid"
 import { RevenueAreaChart } from "@/components/dashboard/revenue-area-chart"
 import { QuickActions } from "@/components/dashboard/quick-actions"
 import { AIFinanceSummary } from "@/components/admin/ai-finance-summary"
-import { DashboardCommandPalette } from "@/components/dashboard/command-palette"
 import { useRealtimeOrders } from "@/hooks/use-realtime-orders"
 import { getDashboardStats } from "@/lib/actions/dashboard"
 import { 
@@ -15,13 +14,18 @@ import {
   Activity, 
   Globe, 
   Zap, 
-  ArrowUpRight 
+  TrendingUp,
+  Cpu,
+  ShieldCheck,
+  ZapOff
 } from "lucide-react"
+
+import { LiveOrderFeed } from "@/components/dashboard/live-order-feed"
+import { NexusChat } from "@/components/dashboard/nexus-chat"
 
 export function DashboardContent() {
   const [stats, setStats] = useState<any>(null)
   
-  // Real-time sipariş takibini başlat
   useRealtimeOrders()
 
   useEffect(() => {
@@ -33,112 +37,112 @@ export function DashboardContent() {
   }, [])
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black tracking-tighter text-zinc-900 dark:text-zinc-100 uppercase">
-            Ticaret <span className="text-zinc-400">Komuta Merkezi</span>
-          </h1>
-          <p className="text-sm font-medium text-zinc-500">
-            Pazaryeri ve depo verileriniz şu an <span className="text-green-500 animate-pulse font-bold">canlı</span> olarak izleniyor.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <DashboardCommandPalette />
-        </div>
-      </div>
-
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+      {/* Nexus AI Insight Bar */}
       <AIFinanceSummary />
 
       <BentoGrid>
-        {/* Ana Gelir Grafiği (Büyük Kart) */}
+        {/* 1. Main Operation Intelligence (Gelir & Tahmin) */}
         <BentoCard 
-          title="Birleşik Gelir Analizi" 
-          description="Tüm platformların performans karşılaştırması"
+          index={0}
+          title="Nexus Operasyonel Zeka" 
+          description="Tüm platformların gerçek zamanlı performans analizi"
           className="md:col-span-3 lg:col-span-3 lg:row-span-1"
           icon={<Activity className="h-5 w-5" />}
         >
-          <div className="h-[250px] mt-4">
+          <div className="h-[250px] mt-6 relative group/chart">
+            <div className="absolute inset-0 bg-primary/5 blur-3xl opacity-0 group-hover/chart:opacity-100 transition-opacity duration-1000" />
             <RevenueAreaChart />
           </div>
         </BentoCard>
 
-        {/* Hızlı İşlemler */}
+        {/* 2. Global Inventory Status */}
         <BentoCard 
-          title="Hızlı İşlemler" 
-          description="Kritik öncelikli aksiyonlar"
-          className="md:col-span-1 lg:col-span-1"
-          icon={<Zap className="h-5 w-5" />}
-        >
-          <div className="mt-4">
-            <QuickActions />
-          </div>
-        </BentoCard>
-
-        {/* İstatistikler */}
-        <BentoCard 
-          title="Toplam Gelir" 
-          className="lg:col-span-1"
-          icon={<DollarSign className="h-5 w-5" />}
-        >
-          <div className="mt-2">
-            <div className="text-3xl font-black tabular-nums tracking-tighter">
-              ₺{stats?.totalRevenue?.toLocaleString("tr-TR") || "..."}
-            </div>
-            <div className="flex items-center gap-1 text-[10px] text-green-500 font-bold mt-2 uppercase">
-              <ArrowUpRight className="h-3 w-3" /> Canlı Veri Akışı Aktif
-            </div>
-          </div>
-        </BentoCard>
-
-        <BentoCard 
-          title="Aktif Siparişler" 
-          className="lg:col-span-1"
-          icon={<ShoppingCart className="h-5 w-5" />}
-        >
-          <div className="mt-2 text-right">
-            <div className="text-4xl font-black tabular-nums tracking-tighter">
-              {stats?.activeOrders || "0"}
-            </div>
-            <div className="flex items-center justify-end gap-1 text-[10px] text-zinc-500 font-bold mt-2 uppercase tracking-widest">
-              Hazırlanan / Kargoda
-            </div>
-          </div>
-        </BentoCard>
-
-        <BentoCard 
-          title="Stok Durumu" 
+          index={1}
+          title="Merkezi Envanter" 
+          description="Single Source of Truth"
           className="lg:col-span-1"
           icon={<Package className="h-5 w-5" />}
         >
-          <div className="mt-2">
-            <div className="text-3xl font-black tabular-nums tracking-tighter">
+          <div className="mt-4">
+            <div className="text-4xl font-black tabular-nums tracking-tighter text-luxury">
               {stats?.totalStock?.toLocaleString("tr-TR") || "0"}
             </div>
-            <div className="flex items-center gap-1 text-[10px] text-amber-500 font-bold mt-2 uppercase tracking-widest leading-none">
-              %{stats?.lowStockPercentage || "0"} KRİTİK SEVİYEDE
+            <div className="mt-4 space-y-2">
+               <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                  <span>Kritik Seviye</span>
+                  <span className="text-amber-500">%{stats?.lowStockPercentage || "0"}</span>
+               </div>
+               <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-900 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-amber-500 rounded-full transition-all duration-1000" 
+                    style={{ width: `${stats?.lowStockPercentage || 0}%` }}
+                  />
+               </div>
             </div>
           </div>
         </BentoCard>
 
+        {/* 3. Live Order Stream (V3 FEED) */}
         <BentoCard 
-          title="Platform Sağlığı" 
-          className="lg:col-span-1"
-          icon={<Globe className="h-5 w-5" />}
+          index={2}
+          title="Canlı Sipariş Akışı" 
+          description="Omni-Nexus Realtime Feed"
+          className="lg:col-span-2"
+          icon={<Cpu className="h-5 w-5" />}
         >
-           <div className="mt-4 flex flex-wrap gap-2">
-              <div className="flex items-center gap-2 px-3 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase text-zinc-600 dark:text-zinc-400">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500" /> TY
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase text-zinc-600 dark:text-zinc-400">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500" /> HB
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase text-zinc-600 dark:text-zinc-400 opacity-50">
-                <div className="w-1.5 h-1.5 rounded-full bg-zinc-300" /> n11
-              </div>
-           </div>
+          <div className="mt-4">
+             <LiveOrderFeed />
+          </div>
+        </BentoCard>
+
+        {/* 4. Platform Health Check */}
+        <BentoCard 
+          index={3}
+          title="Platform Sağlığı" 
+          description="Entegrasyon Durumları"
+          className="lg:col-span-1"
+          icon={<ShieldCheck className="h-5 w-5" />}
+        >
+          <div className="mt-4 grid grid-cols-2 gap-2">
+             <PlatformStatus label="Trendyol" status="active" />
+             <PlatformStatus label="H.Burada" status="active" />
+             <PlatformStatus label="N11" status="idle" />
+             <PlatformStatus label="e-Logo" status="active" />
+          </div>
+        </BentoCard>
+
+        {/* 5. Quick Commands */}
+        <BentoCard 
+          index={4}
+          title="Hızlı Komutlar" 
+          description="Sistem Aksiyonları"
+          className="lg:col-span-1"
+          icon={<Zap className="h-5 w-5" />}
+        >
+          <div className="mt-2">
+            <QuickActions />
+          </div>
         </BentoCard>
       </BentoGrid>
+
+      {/* Luxury Support Module */}
+      <NexusChat />
+    </div>
+  )
+}
+
+function PlatformStatus({ label, status }: { label: string, status: 'active' | 'idle' | 'error' }) {
+  const colors = {
+    active: "bg-green-500 shadow-green-500/20",
+    idle: "bg-zinc-500 shadow-zinc-500/10",
+    error: "bg-red-500 shadow-red-500/20"
+  }
+  
+  return (
+    <div className="flex items-center justify-between p-3 rounded-xl bg-zinc-100/5 dark:bg-zinc-900 shadow-sm border border-white/5">
+       <span className="text-[10px] font-black uppercase tracking-tighter">{label}</span>
+       <div className={`h-1.5 w-1.5 rounded-full ${colors[status]} shadow-lg`} />
     </div>
   )
 }
